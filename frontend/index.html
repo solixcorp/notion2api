@@ -137,7 +137,7 @@ body{background:var(--bg);color:var(--text)}
 /* Sidebar footer */
 .sidebar-footer{
   padding:8px 12px;border-top:1px solid var(--border);
-  display:flex;flex-direction:column;gap:2px;flex-shrink:0;
+  display:flex;flex-direction:column;gap:4px;flex-shrink:0;
 }
 .sidebar-footer-btn{
   display:flex;align-items:center;gap:8px;
@@ -252,6 +252,10 @@ body{background:var(--bg);color:var(--text)}
   </div>
   <div id="chatList" class="chat-list"></div>
   <div class="sidebar-footer">
+    <button id="apiGuideBtn" class="sidebar-footer-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      API usage guide
+    </button>
     <button id="settingsBtn" class="sidebar-footer-btn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Settings
@@ -345,6 +349,83 @@ body{background:var(--bg);color:var(--text)}
     <div class="modal-footer">
       <button id="cancelRenameBtn" class="btn-secondary">Cancel</button>
       <button id="saveRenameBtn" class="btn-primary">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONBOARDING MODAL -->
+<div id="onboardingModal" class="modal-overlay hidden">
+  <div class="modal-content onboarding-content">
+    <div class="modal-header">
+      <h3>Use Notion AI via API</h3>
+      <button id="onboardingCloseBtn" class="modal-close-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body onboarding-body">
+      <p class="onboarding-intro">Connect any OpenAI-compatible client to Notion AI. Pick a model below, paste the Base URL and API Key into your client, and you're ready to go.</p>
+
+      <h4 class="onboarding-section-title">Credentials</h4>
+      <div class="onboarding-credentials">
+        <div>
+          <div class="onboarding-credential-label">Base URL</div>
+          <div class="onboarding-code-row">
+            <code id="onboardingBaseUrl">http://localhost:8000/v1</code>
+            <button type="button" class="onboarding-copy-btn" data-copy="onboardingBaseUrl">Copy</button>
+          </div>
+        </div>
+        <div>
+          <div class="onboarding-credential-label">API Key</div>
+          <div class="onboarding-code-row">
+            <code id="onboardingApiKey">any-string</code>
+            <button type="button" class="onboarding-copy-btn" data-copy="onboardingApiKey">Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <h4 class="onboarding-section-title">Available Models <span id="onboardingModelCount" class="onboarding-model-count"></span></h4>
+      <div id="onboardingModelGrid" class="onboarding-model-grid"></div>
+
+      <h4 class="onboarding-section-title">Endpoints</h4>
+      <div class="onboarding-endpoints">
+        <div><span class="onboarding-method">POST</span><code>/v1/chat/completions</code></div>
+        <div><span class="onboarding-method get">GET</span><code>/v1/models</code></div>
+        <div><span class="onboarding-method get">GET</span><code>/health</code></div>
+      </div>
+
+      <h4 class="onboarding-section-title">Quick Start</h4>
+      <span class="onboarding-code-lang">python</span>
+      <pre class="onboarding-code-block"><code>from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:8000/v1",
+    api_key="any-string"
+)
+
+response = client.chat.completions.create(
+    model="claude-sonnet-4-6",
+    messages=[{"role": "user", "content": "Hello"}],
+    stream=True
+)
+for chunk in response:
+    print(chunk.choices[0].delta.content or "", end="")</code></pre>
+
+      <span class="onboarding-code-lang">curl</span>
+      <pre class="onboarding-code-block"><code>curl -X POST http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-sonnet-4-6",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "stream": false
+  }'</code></pre>
+
+      <label class="onboarding-dismiss-row">
+        <input type="checkbox" id="onboardingDontShow" />
+        <span>Don't show this again</span>
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button id="onboardingGotItBtn" class="btn-primary">Got it</button>
     </div>
   </div>
 </div>
@@ -650,6 +731,45 @@ pre:hover .code-copy-btn{opacity:1}
 }
 .btn-secondary:hover{border-color:var(--border-hover)}
 
+/* ===== ONBOARDING MODAL ===== */
+.onboarding-content{width:680px;max-width:92vw;max-height:88vh;display:flex;flex-direction:column}
+.onboarding-content .modal-header{padding:20px 28px}
+.onboarding-content .modal-header h3{font-size:16px;font-weight:600;letter-spacing:-0.01em}
+.onboarding-content .modal-body{padding:22px 28px 4px;overflow-y:auto}
+.onboarding-content .modal-footer{padding:16px 28px 20px;display:flex;justify-content:flex-end;gap:10px}
+.onboarding-content .modal-footer .btn-primary{padding:8px 22px;font-size:13px;font-weight:500}
+.onboarding-intro{margin:0 0 22px;color:var(--text-secondary);font-size:14px;line-height:1.6}
+.onboarding-section-title{
+  margin:28px 0 12px;font-size:13px;font-weight:600;color:var(--text-primary);
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+}
+.onboarding-section-title:first-of-type{margin-top:0}
+.onboarding-model-count{margin-left:8px;font-size:11.5px;font-weight:400;color:var(--text-tertiary)}
+.onboarding-credentials{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.onboarding-credential-label{font-size:11px;font-weight:500;color:var(--text-tertiary);margin-bottom:5px;letter-spacing:0.02em;text-transform:uppercase}
+.onboarding-code-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px}
+.onboarding-code-row code{flex:1;font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13px;color:var(--text-primary);word-break:break-all}
+.onboarding-copy-btn{padding:5px 12px;font-size:11.5px;font-weight:500;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text-secondary);transition:all .15s}
+.onboarding-copy-btn:hover{border-color:var(--border-hover);color:var(--text-primary);background:var(--bg-hover)}
+.onboarding-copy-btn.copied{color:#16a34a;border-color:#16a34a;background:rgba(22,163,74,.08)}
+.onboarding-model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;max-height:220px;overflow-y:auto;padding:2px}
+.onboarding-model-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:7px;background:var(--bg);font-size:12px;transition:border-color .15s,background .15s}
+.onboarding-model-item:hover{border-color:var(--border-hover);background:var(--bg-secondary)}
+.onboarding-model-icon{font-size:15px;flex-shrink:0;line-height:1}
+.onboarding-model-name{color:var(--text-primary);font-weight:500;font-size:12.5px;line-height:1.3;margin-bottom:2px}
+.onboarding-model-id{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:11px;color:var(--text-tertiary);word-break:break-all;line-height:1.3}
+.onboarding-endpoints{display:flex;flex-direction:column;gap:8px}
+.onboarding-endpoints>div{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px}
+.onboarding-method{padding:3px 9px;font-size:10px;font-weight:700;border-radius:4px;background:#6b7280;color:#fff;letter-spacing:0.04em;min-width:38px;text-align:center}
+.onboarding-method.get{background:#16a34a}
+.onboarding-endpoints code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;color:var(--text-primary)}
+.onboarding-code-lang{display:inline-block;margin-bottom:6px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:0.04em;color:var(--text-tertiary);background:var(--bg);border:1px solid var(--border);border-radius:3px;font-family:ui-monospace,"SF Mono",Menlo,monospace}
+.onboarding-code-block{margin:0 0 18px;padding:14px 16px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;overflow-x:auto}
+.onboarding-code-block code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12.5px;line-height:1.65;color:var(--text-primary);white-space:pre}
+.onboarding-dismiss-row{display:flex;align-items:center;gap:9px;margin:24px 0 4px;padding-top:18px;border-top:1px solid var(--border);font-size:13px;color:var(--text-secondary);cursor:pointer;user-select:none}
+.onboarding-dismiss-row input{cursor:pointer;width:14px;height:14px;accent-color:var(--text-primary)}
+@media(max-width:560px){.onboarding-credentials{grid-template-columns:1fr}}
+
 /* ===== MOBILE ===== */
 @media(max-width:768px){
   .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%)}
@@ -695,66 +815,65 @@ window.NotionAI.Core.Constants = {
   API:{CHAT_COMPLETIONS:'/v1/chat/completions',DELETE_CONVERSATION:id=>`/v1/conversations/${encodeURIComponent(id)}`},
   MODEL_GROUPS:[
     {label:'Anthropic',models:[
-      {id:"claude-sonnet4.6",label:"Sonnet 4.6",provider:"Anthropic",desc:"Fast & efficient"},
-      {id:"claude-sonnet5",label:"Sonnet 5",provider:"Anthropic",badge:"New"},
-      {id:"claude-opus4.6",label:"Opus 4.6",provider:"Anthropic"},
-      {id:"claude-opus4.7",label:"Opus 4.7",provider:"Anthropic"},
-      {id:"claude-opus4.8",label:"Opus 4.8",provider:"Anthropic"},
-      {id:"claude-opus5",label:"Opus 5",provider:"Anthropic",badge:"New"},
-      {id:"claude-haiku4.5",label:"Haiku 4.5",provider:"Anthropic"},
+      {id:"claude-sonnet-4-6",label:"Sonnet 4.6",provider:"Anthropic",desc:"Fast & efficient"},
+      {id:"claude-sonnet-5",label:"Sonnet 5",provider:"Anthropic",badge:"New"},
+      {id:"claude-opus-4-7",label:"Opus 4.7",provider:"Anthropic"},
+      {id:"claude-opus-4-8",label:"Opus 4.8",provider:"Anthropic"},
+      {id:"claude-opus-5",label:"Opus 5",provider:"Anthropic",badge:"New"},
     ]},
     {label:'OpenAI',models:[
       {id:"gpt-5.6-sol",label:"GPT-5.6 Sol",provider:"OpenAI",badge:"New"},
       {id:"gpt-5.6-terra",label:"GPT-5.6 Terra",provider:"OpenAI",badge:"New"},
       {id:"gpt-5.6-luna",label:"GPT-5.6 Luna",provider:"OpenAI",badge:"New"},
-      {id:"gpt-5.4",label:"GPT-5.4",provider:"OpenAI"},
       {id:"gpt-5.5",label:"GPT-5.5",provider:"OpenAI",badge:"Beta"},
+      {id:"gpt-5.4",label:"GPT-5.4",provider:"OpenAI"},
     ]},
     {label:'Google',models:[
-      {id:"gemini-3.5flash",label:"Gemini 3.5 Flash",provider:"Google",badge:"New"},
-      {id:"gemini-3.1pro",label:"Gemini 3.1 Pro",provider:"Google"},
-      {id:"gemini-3flash",label:"Gemini 3 Flash",provider:"Google"},
+      {id:"gemini-3.6-flash",label:"Gemini 3.6 Flash",provider:"Google",badge:"New"},
+      {id:"gemini-3.5-flash",label:"Gemini 3.5 Flash",provider:"Google"},
+      {id:"gemini-3.1-pro",label:"Gemini 3.1 Pro",provider:"Google"},
     ]},
     {label:'Moonshot',models:[
-      {id:"kimi-2.7",label:"Kimi K2.7 Code",provider:"Moonshot",badge:"New"},
+      {id:"kimi-k3",label:"Kimi K3",provider:"Moonshot",badge:"New"},
+      {id:"kimi-k2.7",label:"Kimi K2.7",provider:"Moonshot"},
+      {id:"kimi-k2.6",label:"Kimi K2.6",provider:"Moonshot"},
     ]},
     {label:'xAI',models:[
       {id:"grok-4.3",label:"Grok 4.3",provider:"xAI",badge:"New"},
       {id:"spacexai-4.5",label:"SpaceXAI 4.5",provider:"xAI",badge:"New"},
-      {id:"grok-build0.1",label:"Grok Build 0.1",provider:"xAI",badge:"New"},
+      {id:"grok-build-0.1",label:"Grok Build 0.1",provider:"xAI",badge:"New"},
     ]},
     {label:'DeepSeek',models:[
-      {id:"deepseek-v4pro",label:"DeepSeek V4 Pro",provider:"DeepSeek",badge:"New"},
+      {id:"deepseek-v4-pro",label:"DeepSeek V4 Pro",provider:"DeepSeek",badge:"New"},
     ]},
     {label:'Zhipu',models:[
       {id:"glm-5.2",label:"GLM 5.2",provider:"Zhipu",badge:"New"},
-    ]},
-    {label:'Notion',models:[
-      {id:"fable-5",label:"Fable 5",provider:"Notion",badge:"New"},
     ]}
   ],
   MODELS:[
-    {id:"claude-sonnet4.6",label:"Sonnet 4.6"},{id:"claude-sonnet5",label:"Sonnet 5"},{id:"claude-opus4.6",label:"Opus 4.6"},
-    {id:"claude-opus4.7",label:"Opus 4.7"},{id:"claude-opus4.8",label:"Opus 4.8"},{id:"claude-opus5",label:"Opus 5"},{id:"claude-haiku4.5",label:"Haiku 4.5"},
+    {id:"claude-sonnet-4-6",label:"Sonnet 4.6"},{id:"claude-sonnet-5",label:"Sonnet 5"},
+    {id:"claude-opus-4-7",label:"Opus 4.7"},{id:"claude-opus-4-8",label:"Opus 4.8"},{id:"claude-opus-5",label:"Opus 5"},
     {id:"gpt-5.6-sol",label:"GPT-5.6 Sol"},{id:"gpt-5.6-terra",label:"GPT-5.6 Terra"},{id:"gpt-5.6-luna",label:"GPT-5.6 Luna"},
-    {id:"gpt-5.4",label:"GPT-5.4"},{id:"gpt-5.5",label:"GPT-5.5"},
-    {id:"gemini-3.5flash",label:"Gemini 3.5 Flash"},{id:"gemini-3.1pro",label:"Gemini 3.1 Pro"},{id:"gemini-3flash",label:"Gemini 3 Flash"},
-    {id:"kimi-2.7",label:"Kimi K2.7 Code"},
-    {id:"grok-4.3",label:"Grok 4.3"},{id:"spacexai-4.5",label:"SpaceXAI 4.5"},{id:"grok-build0.1",label:"Grok Build 0.1"},
-    {id:"deepseek-v4pro",label:"DeepSeek V4 Pro"},{id:"glm-5.2",label:"GLM 5.2"},{id:"fable-5",label:"Fable 5"},
+    {id:"gpt-5.5",label:"GPT-5.5"},{id:"gpt-5.4",label:"GPT-5.4"},
+    {id:"gemini-3.6-flash",label:"Gemini 3.6 Flash"},{id:"gemini-3.5-flash",label:"Gemini 3.5 Flash"},{id:"gemini-3.1-pro",label:"Gemini 3.1 Pro"},
+    {id:"kimi-k3",label:"Kimi K3"},{id:"kimi-k2.7",label:"Kimi K2.7"},{id:"kimi-k2.6",label:"Kimi K2.6"},
+    {id:"grok-4.3",label:"Grok 4.3"},{id:"spacexai-4.5",label:"SpaceXAI 4.5"},{id:"grok-build-0.1",label:"Grok Build 0.1"},
+    {id:"deepseek-v4-pro",label:"DeepSeek V4 Pro"},{id:"glm-5.2",label:"GLM 5.2"},
   ],
-  DEFAULT_MODEL:"claude-sonnet4.6",
+  DEFAULT_MODEL:"claude-sonnet-4-6",
   MODEL_DISPLAY_NAMES:{
-    "claude-sonnet4.6":"Sonnet 4.6","claude-sonnet5":"Sonnet 5","claude-opus4.6":"Opus 4.6","claude-opus4.7":"Opus 4.7","claude-opus4.8":"Opus 4.8","claude-opus5":"Opus 5","claude-haiku4.5":"Haiku 4.5",
-    "gpt-5.6-sol":"GPT-5.6 Sol","gpt-5.6-terra":"GPT-5.6 Terra","gpt-5.6-luna":"GPT-5.6 Luna","gpt-5.4":"GPT-5.4","gpt-5.5":"GPT-5.5",
-    "gemini-3.5flash":"Gemini 3.5 Flash","gemini-3.1pro":"Gemini 3.1 Pro","gemini-3flash":"Gemini 3 Flash","kimi-2.7":"Kimi K2.7 Code",
-    "grok-4.3":"Grok 4.3","spacexai-4.5":"SpaceXAI 4.5","grok-build0.1":"Grok Build 0.1","deepseek-v4pro":"DeepSeek V4 Pro","glm-5.2":"GLM 5.2","fable-5":"Fable 5",
+    "claude-sonnet-4-6":"Sonnet 4.6","claude-sonnet-5":"Sonnet 5","claude-opus-4-7":"Opus 4.7","claude-opus-4-8":"Opus 4.8","claude-opus-5":"Opus 5",
+    "gpt-5.6-sol":"GPT-5.6 Sol","gpt-5.6-terra":"GPT-5.6 Terra","gpt-5.6-luna":"GPT-5.6 Luna","gpt-5.5":"GPT-5.5","gpt-5.4":"GPT-5.4",
+    "gemini-3.6-flash":"Gemini 3.6 Flash","gemini-3.5-flash":"Gemini 3.5 Flash","gemini-3.1-pro":"Gemini 3.1 Pro",
+    "kimi-k3":"Kimi K3","kimi-k2.7":"Kimi K2.7","kimi-k2.6":"Kimi K2.6",
+    "grok-4.3":"Grok 4.3","spacexai-4.5":"SpaceXAI 4.5","grok-build-0.1":"Grok Build 0.1","deepseek-v4-pro":"DeepSeek V4 Pro","glm-5.2":"GLM 5.2",
   },
   MODEL_PROVIDERS:{
-    "claude-sonnet4.6":"Anthropic","claude-sonnet5":"Anthropic","claude-opus4.6":"Anthropic","claude-opus4.7":"Anthropic","claude-opus4.8":"Anthropic","claude-opus5":"Anthropic","claude-haiku4.5":"Anthropic",
-    "gpt-5.6-sol":"OpenAI","gpt-5.6-terra":"OpenAI","gpt-5.6-luna":"OpenAI","gpt-5.4":"OpenAI","gpt-5.5":"OpenAI",
-    "gemini-3.5flash":"Google","gemini-3.1pro":"Google","gemini-3flash":"Google","kimi-2.7":"Moonshot",
-    "grok-4.3":"xAI","spacexai-4.5":"xAI","grok-build0.1":"xAI","deepseek-v4pro":"DeepSeek","glm-5.2":"Zhipu","fable-5":"Notion",
+    "claude-sonnet-4-6":"Anthropic","claude-sonnet-5":"Anthropic","claude-opus-4-7":"Anthropic","claude-opus-4-8":"Anthropic","claude-opus-5":"Anthropic",
+    "gpt-5.6-sol":"OpenAI","gpt-5.6-terra":"OpenAI","gpt-5.6-luna":"OpenAI","gpt-5.5":"OpenAI","gpt-5.4":"OpenAI",
+    "gemini-3.6-flash":"Google","gemini-3.5-flash":"Google","gemini-3.1-pro":"Google",
+    "kimi-k3":"Moonshot","kimi-k2.7":"Moonshot","kimi-k2.6":"Moonshot",
+    "grok-4.3":"xAI","spacexai-4.5":"xAI","grok-build-0.1":"xAI","deepseek-v4-pro":"DeepSeek","glm-5.2":"Zhipu",
   },
   CLIENT_TYPE:'Web'
 };
@@ -1699,6 +1818,7 @@ function init(){
   document.getElementById('sendBtn').addEventListener('click',()=>{if(STATE.isGenerating){if(STATE.controller)STATE.controller.abort()}else handleSend()});
   document.getElementById('memoryBannerClose').addEventListener('click',()=>document.getElementById('memoryBanner').classList.add('hidden'));
   document.getElementById('settingsBtn').addEventListener('click',()=>window.NotionAI.API.Settings.open());
+  document.getElementById('apiGuideBtn').addEventListener('click',openOnboarding);
   document.getElementById('cancelSettingsBtn').addEventListener('click',()=>window.NotionAI.API.Settings.close());
   document.getElementById('saveSettingsBtn').addEventListener('click',()=>window.NotionAI.API.Settings.save());
   document.getElementById('cancelRenameBtn').addEventListener('click',()=>window.NotionAI.UI.Modal.closeRenameModal());
@@ -1708,7 +1828,52 @@ function init(){
   document.addEventListener('click',e=>{const dd=document.getElementById('customModelDropdown');if(!dd.contains(e.target)&&e.target.id!=='modelTriggerBtn')dd.classList.remove('open')});
   document.getElementById('searchInput').addEventListener('input',()=>window.NotionAI.Chat.Manager.renderChatList());
 
+  document.getElementById('onboardingCloseBtn').addEventListener('click',closeOnboarding);
+  document.getElementById('onboardingGotItBtn').addEventListener('click',closeOnboarding);
+  document.getElementById('onboardingModal').addEventListener('click',e=>{if(e.target.id==='onboardingModal')closeOnboarding()});
+  document.querySelectorAll('.onboarding-copy-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const t=document.getElementById(btn.dataset.copy);
+      if(!t)return;
+      navigator.clipboard.writeText(t.textContent).then(()=>{
+        const o=btn.textContent;btn.textContent='Copied';btn.classList.add('copied');
+        setTimeout(()=>{btn.textContent=o;btn.classList.remove('copied')},1500);
+      }).catch(()=>{});
+    });
+  });
+
   if(!STATE.currentChatId)window.NotionAI.Chat.Manager.startNewChat();
+
+  maybeShowOnboarding();
+}
+
+// ─── Onboarding ───────────────────────────────────────────────
+const ONBOARDING_KEY='notion2api_onboarding_dismissed';
+function maybeShowOnboarding(){if(localStorage.getItem(ONBOARDING_KEY)!=='1')openOnboarding()}
+function openOnboarding(){
+  populateOnboardingModels();
+  document.getElementById('onboardingModal').classList.remove('hidden');
+}
+function closeOnboarding(){
+  if(document.getElementById('onboardingDontShow').checked)localStorage.setItem(ONBOARDING_KEY,'1');
+  document.getElementById('onboardingModal').classList.add('hidden');
+}
+function populateOnboardingModels(){
+  const grid=document.getElementById('onboardingModelGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+  const groups=window.NotionAI.Core.Constants.MODEL_GROUPS;
+  let count=0;
+  groups.forEach(group=>{
+    group.models.forEach(model=>{
+      const item=document.createElement('div');
+      item.className='onboarding-model-item';
+      item.innerHTML=`<span class="onboarding-model-icon">${model.icon||''}</span><div style="flex:1;min-width:0"><div class="onboarding-model-name">${model.label}</div><div class="onboarding-model-id">${model.id}</div></div>`;
+      grid.appendChild(item);
+      count++;
+    });
+  });
+  document.getElementById('onboardingModelCount').textContent=`(${count})`;
 }
 
 setInterval(updateWelcomeGreeting,60000);

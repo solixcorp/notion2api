@@ -173,6 +173,55 @@ function init() {
     if (!STATE.currentChatId) {
         window.NotionAI.Chat.Manager.startNewChat();
     }
+
+    maybeShowOnboarding();
+}
+
+// ─── Onboarding ───────────────────────────────────────────────
+const ONBOARDING_STORAGE_KEY = 'notion2api_onboarding_dismissed';
+
+function maybeShowOnboarding() {
+    const dismissed = localStorage.getItem(ONBOARDING_STORAGE_KEY) === '1';
+    if (!dismissed) openOnboarding();
+}
+
+function openOnboarding() {
+    populateOnboardingModels();
+    document.getElementById('onboardingModal').classList.remove('hidden');
+}
+
+function closeOnboarding() {
+    const dontShow = document.getElementById('onboardingDontShow').checked;
+    if (dontShow) localStorage.setItem(ONBOARDING_STORAGE_KEY, '1');
+    document.getElementById('onboardingModal').classList.add('hidden');
+}
+
+function populateOnboardingModels() {
+    const grid = document.getElementById('onboardingModelGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const groups = window.NotionAI.Core.Constants.MODEL_GROUPS;
+    const providers = window.NotionAI.Core.State.get('modelDisplayNames');
+    let count = 0;
+
+    groups.forEach(group => {
+        group.models.forEach(model => {
+            const item = document.createElement('div');
+            item.className = 'onboarding-model-item';
+            item.innerHTML = `
+                <span class="onboarding-model-icon">${model.icon || ''}</span>
+                <div style="flex:1;min-width:0">
+                    <div class="onboarding-model-name">${model.label}</div>
+                    <div class="onboarding-model-id">${model.id}</div>
+                </div>
+            `;
+            grid.appendChild(item);
+            count++;
+        });
+    });
+
+    document.getElementById('onboardingModelCount').textContent = `(${count})`;
 }
 
 // ─── Event Listeners ──────────────────────────────────────────
@@ -225,6 +274,10 @@ function bindEventListeners() {
     document.getElementById('saveSettingsBtn').addEventListener('click', () => {
         window.NotionAI.API.Settings.save();
     });
+    document.getElementById('showOnboardingBtn').addEventListener('click', () => {
+        window.NotionAI.API.Settings.close();
+        openOnboarding();
+    });
 
     document.getElementById('cancelRenameBtn').addEventListener('click', () => {
         window.NotionAI.UI.Modal.closeRenameModal();
@@ -247,6 +300,28 @@ function bindEventListeners() {
         if (!dropdown.contains(e.target) && e.target.id !== 'modelTriggerBtn') {
             dropdown.classList.remove('open');
         }
+    });
+
+    // Onboarding bindings
+    document.getElementById('onboardingCloseBtn').addEventListener('click', closeOnboarding);
+    document.getElementById('onboardingGotItBtn').addEventListener('click', closeOnboarding);
+    document.getElementById('onboardingModal').addEventListener('click', (e) => {
+        if (e.target.id === 'onboardingModal') closeOnboarding();
+    });
+    document.querySelectorAll('.onboarding-copy-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = document.getElementById(btn.dataset.copy);
+            if (!target) return;
+            navigator.clipboard.writeText(target.textContent).then(() => {
+                const original = btn.textContent;
+                btn.textContent = 'Copied';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.classList.remove('copied');
+                }, 1500);
+            }).catch(() => {});
+        });
     });
 }
 
