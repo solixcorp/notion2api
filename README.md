@@ -6,7 +6,7 @@
 
 Notion2API 对 Notion AI 网页接口进行逆向工程，将其封装为标准的 `/v1/chat/completions` 端点，可直接用于 Cherry Studio、Zotero 以及任何兼容 OpenAI 的客户端。
 
-2026.07.25：模型列表已同步至 22 个，新增 Claude Opus 5（`agave-flan`）。
+2026.08.13：模型列表已同步至 21 个，重新规范化命名（连字符分隔），新增 Kimi K3 / K2.6 / Gemini 3.6 Flash。
 
 ---
 
@@ -14,7 +14,7 @@ Notion2API 对 Notion AI 网页接口进行逆向工程，将其封装为标准�
 
 - **OpenAI 兼容** — 标准 `/v1/chat/completions` 端点，支持流式（SSE）和非流式响应
 - **三种运行模式** — Lite / Standard / Heavy，满足不同使用场景
-- **22 个 AI 模型** — Claude（含 Opus 5）、GPT-5.x、Gemini、Kimi、Grok、DeepSeek、GLM、Fable
+- **21 个 AI 模型** — Claude（含 Opus 5）、GPT-5.x、Gemini、Kimi（含 K3）、Grok、DeepSeek、GLM
 - **Thinking 面板** — 所有模型均支持推理过程展示
 - **Search 面板** — 展示 Web 搜索查询和来源链接
 - **多账号池** — Round-Robin 负载均衡，带冷却故障转移
@@ -126,28 +126,27 @@ uvicorn app.server:app --host 0.0.0.0 --port 8000
 
 | 模型名称 | 说明 |
 |---|---|
-| `claude-sonnet4.6` | 速度与质量的最佳平衡 — **最推荐** |
-| `claude-sonnet5` | 最新 Sonnet，推理与 agent 能力更强 |
-| `claude-opus4.6` | 推理能力更强，建议适量使用 |
-| `claude-opus4.7` | 更强推理能力 |
-| `claude-opus4.8` | 强推理 Claude |
-| `claude-opus5` | 最新 Claude Opus，推理能力最强 |
-| `claude-haiku4.5` | Haiku 4.5 |
+| `claude-sonnet-4-6` | 速度与质量的最佳平衡 — **最推荐** |
+| `claude-sonnet-5` | 最新 Sonnet，推理与 agent 能力更强 |
+| `claude-opus-4-7` | 更强推理能力 |
+| `claude-opus-4-8` | 强推理 Claude |
+| `claude-opus-5` | 最新 Claude Opus，推理能力最强 |
 | `gpt-5.6-sol` | GPT-5.6 Sol |
 | `gpt-5.6-terra` | GPT-5.6 Terra |
 | `gpt-5.6-luna` | GPT-5.6 Luna |
 | `gpt-5.5` | GPT-5.5 |
 | `gpt-5.4` | OpenAI 模型 |
-| `gemini-3.5flash` | Gemini 3.5 Flash |
-| `gemini-3.1pro` | Google 最强推理模型 |
-| `gemini-3flash` | Gemini 3 Flash |
-| `kimi-2.7` | Kimi K2.7 Code |
+| `gemini-3.6-flash` | Gemini 3.6 Flash |
+| `gemini-3.5-flash` | Gemini 3.5 Flash |
+| `gemini-3.1-pro` | Google 最强推理模型 |
+| `kimi-k3` | Kimi K3 |
+| `kimi-k2.7` | Kimi K2.7 |
+| `kimi-k2.6` | Kimi K2.6 |
 | `grok-4.3` | xAI Grok 4.3 |
 | `spacexai-4.5` | SpaceXAI 4.5 |
-| `grok-build0.1` | xAI Grok Build 0.1 |
-| `deepseek-v4pro` | DeepSeek V4 Pro |
+| `grok-build-0.1` | xAI Grok Build 0.1 |
+| `deepseek-v4-pro` | DeepSeek V4 Pro |
 | `glm-5.2` | GLM 5.2 |
-| `fable-5` | Fable 5 |
 
 完整列表：`GET http://localhost:8000/v1/models`
 
@@ -170,7 +169,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="claude-sonnet4.6",
+    model="claude-sonnet-4-6",
     messages=[{"role": "user", "content": "你好"}],
     stream=True
 )

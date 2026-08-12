@@ -12,7 +12,7 @@ Notion2API reverse-engineers the Notion AI web interface and exposes it as a sta
 
 - **OpenAI Compatible** — Standard `/v1/chat/completions` endpoint, streaming (SSE) and non-streaming
 - **Three Operation Modes** — Lite / Standard / Heavy to fit different use cases
-- **22 AI Models** — Claude (incl. Opus 5), GPT-5.x, Gemini, Kimi, Grok, DeepSeek, GLM, Fable
+- **21 AI Models** — Claude (incl. Opus 5), GPT-5.x, Gemini, Kimi (incl. K3), Grok, DeepSeek, GLM
 - **Thinking Panel** — Reasoning process display for all models
 - **Search Panel** — Web search queries and source links
 - **Multi-Account Pool** — Round-Robin load balancing with cooldown failover
@@ -124,28 +124,27 @@ Access the Web UI at `http://localhost:8000`.
 
 | Model Name | Description |
 |---|---|
-| `claude-sonnet4.6` | Best balance of speed and quality — **most recommended** |
-| `claude-sonnet5` | Sonnet 5 |
-| `claude-opus4.6` | Stronger reasoning, use sparingly |
-| `claude-opus4.7` | Stronger reasoning |
-| `claude-opus4.8` | Strong reasoning Claude |
-| `claude-opus5` | Newest Claude Opus, strongest reasoning |
-| `claude-haiku4.5` | Haiku 4.5 |
+| `claude-sonnet-4-6` | Best balance of speed and quality — **most recommended** |
+| `claude-sonnet-5` | Sonnet 5 |
+| `claude-opus-4-7` | Stronger reasoning |
+| `claude-opus-4-8` | Strong reasoning Claude |
+| `claude-opus-5` | Newest Claude Opus, strongest reasoning |
 | `gpt-5.6-sol` | GPT-5.6 Sol |
 | `gpt-5.6-terra` | GPT-5.6 Terra |
 | `gpt-5.6-luna` | GPT-5.6 Luna |
 | `gpt-5.5` | GPT-5.5 |
 | `gpt-5.4` | OpenAI model |
-| `gemini-3.5flash` | Gemini 3.5 Flash |
-| `gemini-3.1pro` | Google's strongest reasoning model |
-| `gemini-3flash` | Gemini 3 Flash |
-| `kimi-2.7` | Kimi K2.7 Code |
+| `gemini-3.6-flash` | Gemini 3.6 Flash |
+| `gemini-3.5-flash` | Gemini 3.5 Flash |
+| `gemini-3.1-pro` | Google's strongest reasoning model |
+| `kimi-k3` | Kimi K3 |
+| `kimi-k2.7` | Kimi K2.7 |
+| `kimi-k2.6` | Kimi K2.6 |
 | `grok-4.3` | xAI Grok 4.3 |
 | `spacexai-4.5` | SpaceXAI 4.5 |
-| `grok-build0.1` | xAI Grok Build 0.1 |
-| `deepseek-v4pro` | DeepSeek V4 Pro |
+| `grok-build-0.1` | xAI Grok Build 0.1 |
+| `deepseek-v4-pro` | DeepSeek V4 Pro |
 | `glm-5.2` | GLM 5.2 |
-| `fable-5` | Fable 5 |
 
 Full list via API: `GET http://localhost:8000/v1/models`
 
@@ -168,7 +167,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="claude-sonnet4.6",
+    model="claude-sonnet-4-6",
     messages=[{"role": "user", "content": "Hello"}],
     stream=True
 )
@@ -193,7 +192,7 @@ for chunk in response:
 Access `http://localhost:8000` for the built-in **Notion AI Studio** interface:
 
 - **Conversation Management** — Create, rename, delete, star/bookmark
-- **Model Selector** — Grouped by provider (Anthropic / OpenAI / Google / Moonshot / xAI / DeepSeek)
+- **Model Selector** — Grouped by provider (Anthropic / OpenAI / Google / Moonshot / xAI / DeepSeek / Zhipu)
 - **Thinking Panel** — Collapsible reasoning display with elapsed timer
 - **Search Panel** — Collapsible web search queries and source links
 - **Ambient Animations** — Weather effects: default / snow / rain / sunny / night
