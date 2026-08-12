@@ -12,7 +12,7 @@ class AccountPool:
         同时初始化客户端实例和它们的状态。
         """
         if not accounts:
-            raise ValueError("账号池初始化失败：未提供任何账号配置。")
+            raise ValueError("계정 풀 초기화 실패: 계정 설정이 없어요.")
             
         self.clients = [NotionOpusAPI(acc) for acc in accounts]
         # 记录每个客户端的冷却释放时间戳（0 表示可用）
@@ -72,7 +72,7 @@ class AccountPool:
                         continue
 
                     raise RuntimeError(
-                        f"所有账号冷却中，请在 {max(1, int(wait_seconds))} 秒后重试。"
+                        f"모든 계정이 대기 중이에요. {max(1, int(wait_seconds))}초 뒤에 다시 시도해 주세요."
                     )
 
     def get_status_summary(self) -> Dict[str, int]:

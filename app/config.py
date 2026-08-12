@@ -25,21 +25,21 @@ def load_accounts():
         accounts_json = os.getenv("NOTION_ACCOUNTS")
 
     if not accounts_json:
-        raise ValueError("未找到账号配置：请创建 accounts.json 文件或设置 NOTION_ACCOUNTS 环境变量。")
+        raise ValueError("계정 설정을 찾을 수 없어요. accounts.json 파일을 만들거나 NOTION_ACCOUNTS 환경 변수를 설정해 주세요.")
     
     try:
         accounts = json.loads(accounts_json)
         if not isinstance(accounts, list) or len(accounts) == 0:
-            raise ValueError("账号配置格式不正确，应提供非空的 JSON 数组。")
+            raise ValueError("계정 설정 형식이 올바르지 않아요. 비어 있지 않은 JSON 배열이 필요해요.")
         for idx, account in enumerate(accounts):
             if not isinstance(account, dict):
-                raise ValueError(f"账号配置[{idx}] 必须是对象。")
+                raise ValueError(f"계정 설정[{idx}]는 객체여야 해요.")
             missing = sorted(field for field in REQUIRED_ACCOUNT_FIELDS if not account.get(field))
             if missing:
-                raise ValueError(f"账号配置[{idx}] 缺少必要字段: {', '.join(missing)}")
+                raise ValueError(f"계정 설정[{idx}]에 필수 필드가 누락되었어요: {', '.join(missing)}")
         return accounts
     except json.JSONDecodeError as e:
-        raise ValueError(f"解析账号配置失败: {e}")
+        raise ValueError(f"계정 설정 파싱 실패: {e}")
 
 # 全局配置对象
 ACCOUNTS = load_accounts()

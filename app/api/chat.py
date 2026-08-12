@@ -30,64 +30,62 @@ router = APIRouter()
 
 # ─── 结构化错误响应 ─────────────────────────────────────────────
 def _classify_upstream_error(exc: NotionUpstreamError) -> dict[str, Any]:
-    """将 NotionUpstreamError 分类为结构化错误信息，前端可直接展示。"""
     sc = exc.status_code
 
     if sc == 401:
         return {
             "code": "NOTION_401",
             "type": "upstream_auth_error",
-            "message": "Notion 认证失败 (HTTP 401)，token 可能已过期",
-            "suggestion": "请重新获取 token_v2 并更新配置",
+            "message": "Notion 인증 실패 (HTTP 401). 토큰이 만료되었을 수 있어요.",
+            "suggestion": "token_v2를 새로 발급받아 설정을 업데이트해 주세요.",
         }
     if sc == 403:
         return {
             "code": "NOTION_403",
             "type": "upstream_forbidden",
-            "message": "Notion 拒绝访问 (HTTP 403)，可能被 Cloudflare 拦截或账号受限",
-            "suggestion": "检查服务器网络环境，或稍后重试",
+            "message": "Notion 접근 거부 (HTTP 403). Cloudflare 차단이거나 계정 제한일 수 있어요.",
+            "suggestion": "서버 네트워크 환경을 확인하거나 잠시 후 다시 시도해 주세요.",
         }
     if sc == 429:
         return {
             "code": "NOTION_429",
             "type": "upstream_rate_limit",
-            "message": "Notion 请求频率过高 (HTTP 429)",
-            "suggestion": "等待几秒后重试，或配置多个账号分散请求",
+            "message": "Notion 요청이 너무 많아요 (HTTP 429).",
+            "suggestion": "몇 초 뒤 다시 시도하거나, 계정을 여러 개 설정해 부하를 분산해 보세요.",
         }
     if sc and sc >= 500:
         return {
             "code": f"NOTION_{sc}",
             "type": "upstream_server_error",
-            "message": f"Notion 服务暂时不可用 (HTTP {sc})",
-            "suggestion": "Notion 服务端故障，请稍后重试",
+            "message": f"Notion 서비스를 일시적으로 사용할 수 없어요 (HTTP {sc}).",
+            "suggestion": "Notion 서버 측 장애예요. 잠시 후 다시 시도해 주세요.",
         }
     if "timed out" in str(exc).lower():
         return {
             "code": "NETWORK_TIMEOUT",
             "type": "network_timeout",
-            "message": "连接 Notion 超时",
-            "suggestion": "检查服务器到 notion.so 的网络连通性",
+            "message": "Notion 연결 시간 초과",
+            "suggestion": "서버에서 notion.so까지 네트워크 연결을 확인해 주세요.",
         }
     if "failed" in str(exc).lower() and not sc:
         return {
             "code": "NETWORK_ERROR",
             "type": "network_error",
-            "message": "无法连接 Notion 服务",
-            "suggestion": "检查服务器网络和 DNS 配置",
+            "message": "Notion 서비스에 연결할 수 없어요.",
+            "suggestion": "서버 네트워크와 DNS 설정을 확인해 주세요.",
         }
     if "empty" in str(exc).lower():
         return {
             "code": "NOTION_EMPTY",
             "type": "upstream_empty_response",
-            "message": "Notion 返回了空内容",
-            "suggestion": "请重新发送消息",
+            "message": "Notion이 빈 응답을 반환했어요.",
+            "suggestion": "메시지를 다시 보내 주세요.",
         }
-    # 兜底
     return {
         "code": "UPSTREAM_UNKNOWN",
         "type": "upstream_error",
         "message": str(exc),
-        "suggestion": "请稍后重试",
+        "suggestion": "잠시 후 다시 시도해 주세요.",
     }
 
 
@@ -572,7 +570,7 @@ def _create_lite_stream_generator(
             exc_info=True,
             extra={"request_info": {"event": "lite_stream_interrupted"}},
         )
-        error_hint = "\n\n[上游连接中断，请稍后重试。]"
+        error_hint = "\n\n[Notion 연결이 중단되었어요. 잠시 후 다시 시도해 주세요.]"
         streamed_content_accumulator += error_hint
         if not assistant_started:
             assistant_started = True
@@ -752,7 +750,7 @@ def _create_standard_stream_generator(
             exc_info=True,
             extra={"request_info": {"event": "standard_stream_interrupted"}},
         )
-        error_hint = "\n\n[上游连接中断，请稍后重试。]"
+        error_hint = "\n\n[Notion 연결이 중단되었어요. 잠시 후 다시 시도해 주세요.]"
         streamed_content_accumulator += error_hint
         if not assistant_started:
             assistant_started = True
@@ -931,7 +929,7 @@ async def _handle_lite_request(
         available_models = list_available_models()
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported model '{req_body.model}'. Available models: {', '.join(available_models)}",
+            detail=f"지원하지 않는 모델이에요: '{req_body.model}'. 사용 가능한 모델: {', '.join(available_models)}",
         )
 
     response_id = f"chatcmpl-{uuid.uuid4().hex}"
@@ -1058,7 +1056,7 @@ async def _handle_lite_request(
                 code="POOL_COOLING",
                 message=str(exc),
                 error_type="account_pool_cooling",
-                suggestion="所有账号暂时冷却中，请等待几秒后重试",
+                suggestion="모든 계정이 잠시 대기 중이에요. 몇 초 뒤 다시 시도해 주세요.",
             )
         except HTTPException:
             raise
@@ -1079,17 +1077,17 @@ async def _handle_lite_request(
                 return _build_error_response(
                     500,
                     code="INTERNAL_ERROR",
-                    message="服务内部异常",
+                    message="서버 내부 오류가 발생했어요.",
                     error_type="internal_error",
-                    suggestion="请稍后重试，如持续出现请联系管理员",
+                    suggestion="잠시 후 다시 시도해 주세요. 계속 발생하면 관리자에게 문의해 주세요.",
                 )
 
     return _build_error_response(
         503,
         code="RETRIES_EXHAUSTED",
-        message="所有重试均已失败",
+        message="재시도를 모두 실패했어요.",
         error_type="upstream_error",
-        suggestion="Notion 上游服务暂时不可用，请稍后重试",
+        suggestion="Notion 서비스를 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해 주세요.",
     )
 
 
@@ -1115,7 +1113,7 @@ async def _handle_standard_request(
         available_models = list_available_models()
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported model '{req_body.model}'. Available models: {', '.join(available_models)}",
+            detail=f"지원하지 않는 모델이에요: '{req_body.model}'. 사용 가능한 모델: {', '.join(available_models)}",
         )
 
     response_id = f"chatcmpl-{uuid.uuid4().hex}"
@@ -1286,7 +1284,7 @@ async def _handle_standard_request(
                 code="POOL_COOLING",
                 message=str(exc),
                 error_type="account_pool_cooling",
-                suggestion="所有账号暂时冷却中，请等待几秒后重试",
+                suggestion="모든 계정이 잠시 대기 중이에요. 몇 초 뒤 다시 시도해 주세요.",
             )
         except HTTPException:
             raise
@@ -1307,17 +1305,17 @@ async def _handle_standard_request(
                 return _build_error_response(
                     500,
                     code="INTERNAL_ERROR",
-                    message="服务内部异常",
+                    message="서버 내부 오류가 발생했어요.",
                     error_type="internal_error",
-                    suggestion="请稍后重试，如持续出现请联系管理员",
+                    suggestion="잠시 후 다시 시도해 주세요. 계속 발생하면 관리자에게 문의해 주세요.",
                 )
 
     return _build_error_response(
         503,
         code="RETRIES_EXHAUSTED",
-        message="所有重试均已失败",
+        message="재시도를 모두 실패했어요.",
         error_type="upstream_error",
-        suggestion="Notion 上游服务暂时不可用，请稍后重试",
+        suggestion="Notion 서비스를 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해 주세요.",
     )
 
 
@@ -1361,7 +1359,7 @@ async def create_chat_completion(
         available_models = list_available_models()
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported model '{req_body.model}'. Available models: {', '.join(available_models)}",
+            detail=f"지원하지 않는 모델이에요: '{req_body.model}'. 사용 가능한 모델: {', '.join(available_models)}",
         )
 
     conversation_id = (
@@ -1661,7 +1659,7 @@ async def create_chat_completion(
                             }
                         },
                     )
-                    error_hint = "\n\n[上游连接中断，请稍后重试。]"
+                    error_hint = "\n\n[Notion 연결이 중단되었어요. 잠시 후 다시 시도해 주세요.]"
                     streamed_content_accumulator += error_hint
                     if not assistant_started:
                         assistant_started = True
@@ -1898,7 +1896,7 @@ async def create_chat_completion(
                 code="POOL_COOLING",
                 message=str(exc),
                 error_type="account_pool_cooling",
-                suggestion="所有账号暂时冷却中，请等待几秒后重试",
+                suggestion="모든 계정이 잠시 대기 중이에요. 몇 초 뒤 다시 시도해 주세요.",
             )
         except HTTPException:
             raise
@@ -1920,17 +1918,17 @@ async def create_chat_completion(
                 return _build_error_response(
                     500,
                     code="INTERNAL_ERROR",
-                    message="服务内部异常",
+                    message="서버 내부 오류가 발생했어요.",
                     error_type="internal_error",
-                    suggestion="请稍后重试，如持续出现请联系管理员",
+                    suggestion="잠시 후 다시 시도해 주세요. 계속 발생하면 관리자에게 문의해 주세요.",
                 )
 
     return _build_error_response(
         503,
         code="RETRIES_EXHAUSTED",
-        message="所有重试均已失败",
+        message="재시도를 모두 실패했어요.",
         error_type="upstream_error",
-        suggestion="Notion 上游服务暂时不可用，请稍后重试",
+        suggestion="Notion 서비스를 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해 주세요.",
     )
 
 

@@ -1,5 +1,4 @@
 requests
-cloudscraper
 python-dotenv
 fastapi
 uvicorn[standard]

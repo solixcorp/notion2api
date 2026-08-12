@@ -4,7 +4,6 @@ import time
 import uuid
 from typing import Any, Generator, Optional
 
-import cloudscraper
 import requests
 import urllib3
 
@@ -60,9 +59,8 @@ class NotionOpusAPI:
         self.delete_url = f"{NOTION_URL}/api/v3/saveTransactions"
         self.account_key = self.user_email or self.user_id or "unknown-account"
 
-        # 复用 cloudscraper 实例：保留 Cloudflare challenge cookie，避免每次请求都重新过验证
-        self._scraper = cloudscraper.create_scraper()
-        self._scraper_lock = threading.Lock()
+        self._session = requests.Session()
+        self._session_lock = threading.Lock()
 
     def _build_cookie_header(self) -> str:
         cookie_jar = self.cookies.copy()
@@ -326,36 +324,18 @@ class NotionOpusAPI:
         )
 
         try:
-            with self._scraper_lock:
-                scraper = self._scraper
-                scraper.cookies.clear()
-            response = scraper.post(
+            with self._session_lock:
+                session = self._session
+                session.cookies.clear()
+            response = session.post(
                 self.url,
                 headers=headers,
                 json=payload,
                 stream=True,
                 timeout=(15, 120),
             )
-            if response.status_code == 403:
-                # Cloudflare challenge 可能过期，重建 scraper 后重试一次
-                response.close()
-                logger.warning(
-                    "Got 403, rebuilding cloudscraper to refresh Cloudflare challenge",
-                    extra={"request_info": {"event": "cloudflare_challenge_refresh", "account": self.account_key}},
-                )
-                new_scraper = cloudscraper.create_scraper()
-                with self._scraper_lock:
-                    self._scraper = new_scraper
-                response = new_scraper.post(
-                    self.url,
-                    headers=headers,
-                    json=payload,
-                    stream=True,
-                    timeout=(15, 120),
-                )
             if response.status_code != 200:
                 excerpt = (response.text or "").strip().replace("\n", " ")[:300]
-                # 429 和 5xx 都允许重试（换账号或等待后重试）
                 retriable = response.status_code >= 500 or response.status_code == 429
                 raise NotionUpstreamError(
                     f"Notion upstream returned HTTP {response.status_code}.",
