@@ -2,7 +2,7 @@
 
 > 本文档记录项目的完整状态、架构细节、开发历程和当前进展。  
 > 目标：阅读本文档后，即可全面掌握项目最新全貌。  
-> 最后更新：2026-07-25（模型列表同步至 22 个，新增 Claude Opus 5）
+> 最后更新：2026-08-13（模型名规范化，新增 Kimi K3 / K2.6 / Gemini 3.6 Flash，下线 4 个旧模型，总数 21）
 
 ---
 
@@ -16,7 +16,7 @@ Notion2API 是一个将 **Notion AI** 逆向封装为 **OpenAI 兼容 API** 的�
 
 - **OpenAI 兼容 API**：标准 `/v1/chat/completions` 端点，支持流式（SSE）和非流式响应
 - **三种运行模式**：Lite / Standard / Heavy，满足不同场景需求
-- **22 个 AI 模型**：Claude（含 Opus 5）、GPT-5.x、Gemini、Kimi、Grok、DeepSeek、GLM、Fable
+- **21 个 AI 模型**：Claude（含 Opus 5）、GPT-5.x、Gemini、Kimi（含 K3）、Grok、DeepSeek、GLM
 - **三层记忆系统**（Heavy 模式）：滑动窗口 + 压缩摘要 + 完整归档
 - **多账号负载均衡**：Round-Robin 轮询 + 冷却机制
 - **内置 Web UI**：Claude 风格界面，支持 Thinking 面板、Search 面板、对话管理
@@ -234,7 +234,7 @@ notion2api/
 
 **请求流程**：
 1. 构建 transcript（config + context + 对话历史）
-2. 将外部模型名映射为 Notion 内部代号（如 `claude-sonnet4.6` → `almond-croissant-low`）
+2. 将外部模型名映射为 Notion 内部代号（如 `claude-sonnet-4-6` → `almond-croissant-low`）
 3. 根据模型确定 thread type（`workflow` 或 `markdown-chat`）
 4. 使用 cloudscraper 绕过 Cloudflare 发送请求
 5. 解析 NDJSON 流式响应
@@ -287,28 +287,27 @@ Notion 的流式响应是 NDJSON 格式，每行是一个 JSON 对象。解析�
 
 | 外部名称 | Notion 内部代号 | Thread Type | 说明 |
 |----------|-----------------|-------------|------|
-| claude-sonnet4.6 | almond-croissant-low | workflow | **推荐**，速度与质量最佳平衡 |
-| claude-sonnet5 | angel-cake-high | workflow | Sonnet 5 |
-| claude-opus4.6 | avocado-froyo-medium | workflow | 更强推理，不建议频繁使用 |
-| claude-opus4.7 | apricot-sorbet-high | workflow | 更强推理 |
-| claude-opus4.8 | ambrosia-tart-high | workflow | 强推理 Claude |
-| claude-opus5 | agave-flan | workflow | 最新 Claude Opus，最强推理 |
-| claude-haiku4.5 | anthropic-haiku-4.5 | workflow | Haiku 4.5 |
+| claude-sonnet-4-6 | almond-croissant-low | workflow | **推荐**，速度与质量最佳平衡 |
+| claude-sonnet-5 | angel-cake-high | workflow | Sonnet 5 |
+| claude-opus-4-7 | apricot-sorbet-high | workflow | 更强推理 |
+| claude-opus-4-8 | ambrosia-tart-high | workflow | 强推理 Claude |
+| claude-opus-5 | agave-flan | workflow | 最新 Claude Opus，最强推理 |
 | gpt-5.6-sol | orange-mousse | workflow | GPT-5.6 Sol |
 | gpt-5.6-terra | orchid-muffin | workflow | GPT-5.6 Terra |
 | gpt-5.6-luna | olive-jellyroll | workflow | GPT-5.6 Luna |
-| gpt-5.4 | oval-kumquat-medium | workflow | OpenAI 模型 |
 | gpt-5.5 | opal-quince-medium | workflow | GPT-5.5 |
-| gemini-3.5flash | vertex-gemini-3.5-flash | markdown-chat | Gemini 3.5 Flash |
-| gemini-3.1pro | galette-medium-thinking | workflow | Google 最强推理模型 |
-| gemini-3flash | gingerbread | workflow | Gemini 3 Flash |
-| kimi-2.7 | fireworks-kimi-k2.7 | workflow | Kimi K2.7 Code |
+| gpt-5.4 | oval-kumquat-medium | workflow | OpenAI 模型 |
+| gemini-3.6-flash | vertex-gemini-3.6-flash | markdown-chat | Gemini 3.6 Flash |
+| gemini-3.5-flash | vertex-gemini-3.5-flash | markdown-chat | Gemini 3.5 Flash |
+| gemini-3.1-pro | galette-medium-thinking | workflow | Google 最强推理模型 |
+| kimi-k3 | fireworks-kimi-k3 | workflow | Kimi K3 |
+| kimi-k2.7 | fireworks-kimi-k2.7 | workflow | Kimi K2.7 |
+| kimi-k2.6 | fireworks-kimi-k2.6 | workflow | Kimi K2.6 |
 | grok-4.3 | xigua-mochi-medium | workflow | xAI Grok 4.3 |
 | spacexai-4.5 | strawberry-whoopiepie | workflow | SpaceXAI 4.5 |
-| grok-build0.1 | xinomavro-cake | workflow | xAI Grok Build 0.1 |
-| deepseek-v4pro | baseten-deepseek-v4-pro | workflow | DeepSeek V4 Pro |
+| grok-build-0.1 | xinomavro-cake | workflow | xAI Grok Build 0.1 |
+| deepseek-v4-pro | baseten-deepseek-v4-pro | workflow | DeepSeek V4 Pro |
 | glm-5.2 | baseten-glm-5.2 | workflow | GLM 5.2 |
-| fable-5 | acai-budino-high | workflow | Fable 5 |
 
 ### 4.7 前端 Web UI
 
@@ -466,7 +465,8 @@ Notion 的流式响应是 NDJSON 格式，每行是一个 JSON 对象。解析�
 | 05-29 | `0611adb` | 同步官方新模型 Claude Opus 4.8（`ambrosia-tart-high`） |
 | 05-29 | `7b4439e` | 修复默认回退 Sonnet 模型的 bug |
 | 06-06 | `880357e` | 同步官方新模型 Grok 4.3、Grok Build 0.1、DeepSeek V4 Pro |
-| 07-25 | — | 同步官方新模型 Claude Opus 5（`claude-opus5` / `agave-flan`），模型总数 22 |
+| 07-25 | — | 同步官方新模型 Claude Opus 5（`claude-opus-5` / `agave-flan`），模型总数 22 |
+| 08-13 | — | 模型名规范化（连字符分隔），新增 Kimi K3 / K2.6 / Gemini 3.6 Flash，下线 Opus 4.6 / Haiku 4.5 / Gemini 3 Flash / Fable 5，模型总数 21 |
 
 ---
 
@@ -584,7 +584,7 @@ uvicorn app.server:app --host 0.0.0.0 --port 8000
 **截至 2026-07**：
 
 **已完成**：
-- ✅ 模型列表已同步至 22 个，覆盖最新 Claude Opus 5（`agave-flan`）、GPT-5.6、Gemini、Kimi、GLM、Grok、DeepSeek 与 Fable 模型
+- ✅ 模型列表已同步至 21 个，覆盖最新 Claude Opus 5（`agave-flan`）、GPT-5.6、Gemini、Kimi（含 K3）、GLM、Grok、DeepSeek
 - ✅ 合并 PR #12：浏览器辅助登录 `login.py`（CDP，支持 Chrome/Edge，自动写入 accounts.json + .env）
 - ✅ 文档结构重组：README 双语重写、issues.md 中英合并、删除冗余 md 文件（ARCHITECTURE.md、DEPLOYMENT.md、accounts.README.md、CLAUDE.md、issues_CN.md）
 - ✅ 结构化错误提示系统（11 种错误码，前端红色错误卡片）

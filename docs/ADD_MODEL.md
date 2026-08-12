@@ -1,7 +1,7 @@
 # 新增模型清单
 
 > 加模型只改下面这些地方。**不必全库搜索。**  
-> 样例：`claude-opus5` → Notion 代号 `agave-flan`，显示名 `Opus 5`
+> 样例：`claude-opus-5` → Notion 代号 `agave-flan`，显示名 `Opus 5`
 
 需要先确认：**外部 API 名**、**Notion 内部代号**、**显示名**、**厂商分组**（Anthropic / OpenAI / …）。
 
