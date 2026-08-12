@@ -69,3 +69,9 @@ docker-compose.override.yml
 
 # Response debug data (contains sensitive tokens)
 response/
+
+# Agent working artifacts
+.omo/
+.playwright-mcp/
+onboarding-*.png
+settings-modal.png
