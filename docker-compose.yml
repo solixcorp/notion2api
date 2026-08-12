@@ -35,11 +35,10 @@ services:
       - PYTHONUNBUFFERED=1
       - TZ=Asia/Shanghai
 
-    # Data persistence + account config
+    # Data persistence
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
-      - ./accounts.json:/app/accounts.json:ro
 
     # Resource limits (prevents container from using all system resources)
     deploy:

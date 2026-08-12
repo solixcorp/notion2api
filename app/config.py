@@ -16,7 +16,7 @@ def load_accounts():
     accounts_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "accounts.json")
     accounts_json = None
 
-    if os.path.exists(accounts_file):
+    if os.path.isfile(accounts_file):
         with open(accounts_file, "r", encoding="utf-8") as f:
             accounts_json = f.read().strip()
     
