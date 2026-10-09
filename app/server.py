@@ -16,10 +16,10 @@ from app.limiter import limiter
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 启动时初始化状态
+    # Initialize state on startup
     app.state.account_pool = AccountPool(ACCOUNTS)
 
-    # 确定运行模式
+    # Determine run mode
     if is_lite_mode():
         mode = "lite"
         logger.info("Service starting up in LITE mode", extra={"request_info": {"event": "startup", "accounts": len(ACCOUNTS), "mode": "lite"}})
@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
 
     app.state.start_time = time.time()
     yield
-    # 关闭时清理
+    # Cleanup on shutdown
     logger.info("Service shutting down", extra={"request_info": {"event": "shutdown"}})
 
 app = FastAPI(
@@ -43,7 +43,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# 允许跨域（配合本地前端）
+# Enable CORS (for local frontend)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -52,10 +52,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 注入 Limiter
+# Attach rate limiter
 app.state.limiter = limiter
 
-# 自定义 429 速率限制响应
+# Custom 429 rate-limit response
 def custom_rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(
         status_code=429,
@@ -87,12 +87,12 @@ async def generic_exception_handler(request: Request, exc: Exception):
         },
     )
 
-# 结构化日志中间件
+# Structured request logging middleware
 @app.middleware("http")
 async def log_requests_middleware(request: Request, call_next):
     start_time = time.time()
     
-    # 跳过高频且不重要的日志打印，避免刷屏
+    # Skip noisy low-value paths to avoid log spam
     skip_logging = request.url.path in ["/health", "/favicon.ico"]
     
     try:
@@ -123,12 +123,12 @@ async def log_requests_middleware(request: Request, call_next):
             
     return response
 
-# 简易 API Key 鉴权中间件
+# Simple API key auth middleware
 @app.middleware("http")
 async def api_key_auth(request: Request, call_next):
-    # 如果环境配置中未设置 API_KEY，则全局不验证
+    # Skip auth entirely if API_KEY is not configured
     if API_KEY:
-        # 跳过 OPTIONS 请求和非受保护的静态路由（如果以后有的话）
+        # Skip OPTIONS requests and unprotected static routes
         if request.url.path.startswith("/v1") and request.method != "OPTIONS":
             auth_header = request.headers.get("Authorization", "")
             if not auth_header.startswith("Bearer ") or auth_header.split(" ")[1] != API_KEY:
@@ -144,11 +144,11 @@ async def api_key_auth(request: Request, call_next):
                 )
     return await call_next(request)
 
-# 挂载路由，前缀统一为 /v1
+# Mount routers under /v1 prefix
 app.include_router(chat_router, prefix="/v1")
 app.include_router(models_router, prefix="/v1")
 
-# 挂载健康检查
+# Health check and static assets
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return Response(content=b"", media_type="image/x-icon", status_code=204)
@@ -166,7 +166,7 @@ def health_check(request: Request):
         "uptime": int(uptime)
     }
 
-# 挂载静态前端到根目录
+# Mount frontend static files at root
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
 if os.path.exists(frontend_dir):
     app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

@@ -4,14 +4,14 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from app.config import is_lite_mode, is_standard_mode
 
-# DISABLE_RATE_LIMIT=True 时关闭限流（调试用）
+# Set DISABLE_RATE_LIMIT=true to disable rate limiting (for debugging)
 _disable_flag = os.getenv("DISABLE_RATE_LIMIT", "").strip().lower()
 _rate_limit_disabled = _disable_flag == "true"
 
-# 根据 APP_MODE 动态设置速率限制
-# Lite 模式：30/minute（单轮问答响应快，3-5秒/次）
-# Standard 模式：25/minute（完整上下文，支持 thinking 和搜索）
-# Heavy 模式：20/minute（需要数据库操作，相对慢一些）
+# Set rate limit dynamically based on APP_MODE
+# Lite:     30/minute (fast single-turn, ~3-5s per request)
+# Standard: 25/minute (full context with thinking and search)
+# Heavy:    20/minute (includes database operations, slower)
 if is_lite_mode():
     default_limit = "30/minute"
 elif is_standard_mode():

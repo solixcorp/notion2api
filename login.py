@@ -21,12 +21,12 @@ from urllib.request import urlopen
 import requests
 from websocket import create_connection
 
-# 与 app/notion_client.py 一致：支持区域镜像 / 反代，默认官方站点
+# Consistent with app/notion_client.py: supports regional mirrors / reverse proxies, defaults to official site
 NOTION_URL = os.getenv("NOTION_URL", "https://www.notion.so").rstrip("/")
 NOTION_DOMAIN = os.getenv("NOTION_DOMAIN", "www.notion.so").lstrip(".")
 BASE_URL = NOTION_URL
 AI_URL = f"{NOTION_URL}/ai"
-# CDP 页面识别用的主机名片段（自定义域名时填 NOTION_DOMAIN 即可）
+# Hostname fragment used to identify the CDP page (for custom domains, set NOTION_DOMAIN)
 _NOTION_HOST_HINT = (
     NOTION_DOMAIN.removeprefix("www.")
     if NOTION_DOMAIN.startswith("www.")

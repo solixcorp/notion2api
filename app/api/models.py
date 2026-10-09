@@ -11,7 +11,7 @@ router = APIRouter()
 @router.get("/models", tags=["models"])
 async def list_models() -> Dict[str, Any]:
     """
-    列出可用的模型，兼容 OpenAI 格式。
+    List available models in OpenAI-compatible format.
     """
     created_at = int(time.time())
     return {

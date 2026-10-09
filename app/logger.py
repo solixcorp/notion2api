@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 
 class JsonFormatter(logging.Formatter):
-    """自定义 JSON 格式化器"""
+    """Custom JSON log formatter."""
     def format(self, record):
         log_record = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat(),
@@ -12,21 +12,21 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
         }
         
-        # 提取自定义 extra 字段
+        # Merge custom extra fields
         if hasattr(record, "request_info"):
             log_record.update(record.request_info)
             
-        # 如果有异常，记录 trace
+        # Include exception traceback if present
         if record.exc_info:
             log_record["exception"] = self.formatException(record.exc_info)
             
         return json.dumps(log_record, ensure_ascii=False)
 
 def setup_logger(name="notion_opus"):
-    """配置并返回单例全局 logger"""
+    """Configure and return the singleton global logger."""
     logger = logging.getLogger(name)
     
-    # 防止重复添加 handler
+    # Guard against duplicate handlers
     if not logger.handlers:
         logger.setLevel(logging.INFO)
         
@@ -37,5 +37,5 @@ def setup_logger(name="notion_opus"):
         
     return logger
 
-# 全局单例 logger 实例
+# Global singleton logger instance
 logger = setup_logger()

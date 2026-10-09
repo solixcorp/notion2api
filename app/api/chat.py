@@ -28,7 +28,7 @@ from app.schemas import (
 router = APIRouter()
 
 
-# ─── 结构化错误响应 ─────────────────────────────────────────────
+# ─── Structured error responses ────────────────────────────────
 def _classify_upstream_error(exc: NotionUpstreamError) -> dict[str, Any]:
     sc = exc.status_code
 
@@ -36,56 +36,56 @@ def _classify_upstream_error(exc: NotionUpstreamError) -> dict[str, Any]:
         return {
             "code": "NOTION_401",
             "type": "upstream_auth_error",
-            "message": "Notion 인증 실패 (HTTP 401). 토큰이 만료되었을 수 있어요.",
-            "suggestion": "token_v2를 새로 발급받아 설정을 업데이트해 주세요.",
+            "message": "Notion authentication failed (HTTP 401). Your token may have expired.",
+            "suggestion": "Re-generate your token_v2 and update the configuration.",
         }
     if sc == 403:
         return {
             "code": "NOTION_403",
             "type": "upstream_forbidden",
-            "message": "Notion 접근 거부 (HTTP 403). Cloudflare 차단이거나 계정 제한일 수 있어요.",
-            "suggestion": "서버 네트워크 환경을 확인하거나 잠시 후 다시 시도해 주세요.",
+            "message": "Notion access denied (HTTP 403). May be a Cloudflare block or account restriction.",
+            "suggestion": "Check your server's network environment or retry in a moment.",
         }
     if sc == 429:
         return {
             "code": "NOTION_429",
             "type": "upstream_rate_limit",
-            "message": "Notion 요청이 너무 많아요 (HTTP 429).",
-            "suggestion": "몇 초 뒤 다시 시도하거나, 계정을 여러 개 설정해 부하를 분산해 보세요.",
+            "message": "Too many requests to Notion (HTTP 429).",
+            "suggestion": "Wait a few seconds and retry, or configure multiple accounts to distribute load.",
         }
     if sc and sc >= 500:
         return {
             "code": f"NOTION_{sc}",
             "type": "upstream_server_error",
-            "message": f"Notion 서비스를 일시적으로 사용할 수 없어요 (HTTP {sc}).",
-            "suggestion": "Notion 서버 측 장애예요. 잠시 후 다시 시도해 주세요.",
+            "message": f"Notion service temporarily unavailable (HTTP {sc}).",
+            "suggestion": "Server-side Notion failure. Please retry in a moment.",
         }
     if "timed out" in str(exc).lower():
         return {
             "code": "NETWORK_TIMEOUT",
             "type": "network_timeout",
-            "message": "Notion 연결 시간 초과",
-            "suggestion": "서버에서 notion.so까지 네트워크 연결을 확인해 주세요.",
+            "message": "Connection to Notion timed out.",
+            "suggestion": "Check network connectivity from your server to notion.so.",
         }
     if "failed" in str(exc).lower() and not sc:
         return {
             "code": "NETWORK_ERROR",
             "type": "network_error",
-            "message": "Notion 서비스에 연결할 수 없어요.",
-            "suggestion": "서버 네트워크와 DNS 설정을 확인해 주세요.",
+            "message": "Cannot connect to Notion service.",
+            "suggestion": "Check your server's network and DNS configuration.",
         }
     if "empty" in str(exc).lower():
         return {
             "code": "NOTION_EMPTY",
             "type": "upstream_empty_response",
-            "message": "Notion이 빈 응답을 반환했어요.",
-            "suggestion": "메시지를 다시 보내 주세요.",
+            "message": "Notion returned an empty response.",
+            "suggestion": "Please resend your message.",
         }
     return {
         "code": "UPSTREAM_UNKNOWN",
         "type": "upstream_error",
         "message": str(exc),
-        "suggestion": "잠시 후 다시 시도해 주세요.",
+        "suggestion": "Please try again in a moment.",
     }
 
 
@@ -98,7 +98,7 @@ def _build_error_response(
     suggestion: str = "",
     detail: str = "",
 ) -> JSONResponse:
-    """构建统一格式的错误 JSON 响应，前端可解析展示。"""
+    """Build a unified error JSON response that the frontend can parse and display."""
     content: dict[str, Any] = {
         "error": {
             "message": message,
@@ -114,7 +114,7 @@ def _build_error_response(
 
 
 def _upstream_error_response(exc: NotionUpstreamError) -> JSONResponse:
-    """将 NotionUpstreamError 转为统一的 503 JSON 响应。"""
+    """Convert a NotionUpstreamError into a unified 503 JSON response."""
     info = _classify_upstream_error(exc)
     return _build_error_response(
         503,
@@ -127,19 +127,17 @@ def _upstream_error_response(exc: NotionUpstreamError) -> JSONResponse:
 
 
 RECALL_INTENT_KEYWORDS = [
-    "之前",
-    "上次",
-    "以前",
-    "你还记得",
-    "我们之前",
     "earlier",
     "before",
     "recall",
     "remember",
-    "之前说过",
-    "历史记录",
-    "找一下",
-    "搜索记忆",
+    "last time",
+    "previously",
+    "do you remember",
+    "we talked about",
+    "history",
+    "look it up",
+    "search memory",
 ]
 
 
@@ -189,17 +187,17 @@ def _build_local_ui_chunk(
 
 
 def _format_search_results_md(search_data: dict[str, Any]) -> str:
-    """将搜索数据格式化为 Markdown 引用块，以便标准客户端显示。"""
+    """Format search data as a Markdown blockquote for standard clients."""
     lines = []
     queries = search_data.get("queries", [])
     if queries:
-        lines.append(f"> 🔍 **已搜索:** {', '.join(queries)}")
+        lines.append(f"> 🔍 **Searched:** {', '.join(queries)}")
 
     sources = search_data.get("sources", [])
     if sources:
-        lines.append("> 🌐 **来源:**")
-        for i, src in enumerate(sources[:5], 1):  # 最多显示5个来源，避免刷屏
-            title = src.get("title") or src.get("url") or "未知来源"
+        lines.append("> 🌐 **Sources:**")
+        for i, src in enumerate(sources[:5], 1):  # show at most 5 sources
+            title = src.get("title") or src.get("url") or "Unknown source"
             url = src.get("url")
             if url:
                 lines.append(f"> {i}. [{title}]({url})")
@@ -389,7 +387,7 @@ def _build_thinking_replacement(
     if not normalized_final:
         return None
 
-    # 只在几乎没有真实正文增量时做裁决，避免误伤复杂推理场景。
+    # Only apply when there is very little real content delta, to avoid incorrectly trimming complex reasoning.
     if normalized_streamed and len(normalized_streamed) >= max(
         10, int(len(normalized_final) * 0.35)
     ):
@@ -478,7 +476,7 @@ def _prepare_messages(
 
 
 def _prepare_messages_lite(req_body: ChatCompletionRequest) -> str:
-    """Lite 模式：只提取最后一条 user 消息，支持 system 指令合并"""
+    """Lite mode: extract the last user message only, merging any system instructions."""
     system_messages = []
     user_prompt = ""
 
@@ -510,7 +508,7 @@ def _create_lite_stream_generator(
     first_item: Any,
     stream_gen: Iterable[Any],
 ) -> Generator[str, None, None]:
-    """Lite 模式流式生成器：只输出 content，忽略 thinking 和 search"""
+    """Lite mode stream generator: outputs content only, ignores thinking and search."""
     streamed_content_accumulator = ""
     authoritative_final_content = ""
     authoritative_final_source_type = ""
@@ -530,7 +528,7 @@ def _create_lite_stream_generator(
                     )
                 continue
 
-            # Lite 模式忽略 thinking 和 search
+            # Lite mode: skip thinking and search events
             if item_type in ("thinking", "search"):
                 continue
 
@@ -570,7 +568,7 @@ def _create_lite_stream_generator(
             exc_info=True,
             extra={"request_info": {"event": "lite_stream_interrupted"}},
         )
-        error_hint = "\n\n[Notion 연결이 중단되었어요. 잠시 후 다시 시도해 주세요.]"
+        error_hint = "\n\n[Notion connection interrupted. Please try again in a moment.]"
         streamed_content_accumulator += error_hint
         if not assistant_started:
             assistant_started = True
@@ -583,14 +581,14 @@ def _create_lite_stream_generator(
         else:
             yield _build_stream_chunk(response_id, model_name, content=error_hint)
     finally:
-        # 选择最佳最终回复
+        # Pick the best final reply
         final_reply, _ = _select_best_final_reply(
             streamed_content_accumulator,
             authoritative_final_content,
             authoritative_final_source_type,
         )
 
-        # 发送缺失的后缀（如果有）
+        # Emit any missing suffix
         missing_suffix = _compute_missing_suffix(
             streamed_content_accumulator, final_reply
         )
@@ -609,7 +607,7 @@ def _create_lite_stream_generator(
                 )
             streamed_content_accumulator += missing_suffix
         elif final_reply != streamed_content_accumulator:
-            # 处理分叉内容（使用最终内容）
+            # Diverged — use the authoritative final reply
             if not streamed_content_accumulator and final_reply:
                 if not assistant_started:
                     assistant_started = True
@@ -637,17 +635,17 @@ def _create_standard_stream_generator(
     client_type: str = "",
 ) -> Generator[str, None, None]:
     """
-    Standard 模式流式生成器：使用前端定义的 SSE 事件类型
+    Standard mode stream generator using frontend-defined SSE event types.
 
-    前端协议：
-    - thinking_chunk: 流式思考片段
-    - thinking_replace: 完整思考替换
-    - search_metadata: 搜索结果
-    - choices[0].delta.content: 正文内容
+    Frontend protocol:
+    - thinking_chunk: incremental thinking fragment
+    - thinking_replace: full thinking replacement
+    - search_metadata: search results
+    - choices[0].delta.content: body content
 
-    对非 web 客户端（如 opencode 等严格 OpenAI 兼容客户端），thinking 使用
-    delta.reasoning_content；search 以 markdown 注入 content（对齐 Heavy），
-    避免自定义 SSE 字段触发 strict validation，同时不丢搜索结果。
+    For strict OpenAI clients (e.g. opencode), thinking uses delta.reasoning_content
+    and search is injected as markdown into content (matching Heavy mode behavior),
+    avoiding custom SSE fields that trigger strict validation while preserving results.
     """
     streamed_content_accumulator = ""
     streamed_thinking_accumulator = ""
@@ -672,16 +670,16 @@ def _create_standard_stream_generator(
                     )
                 continue
 
-            # Standard 模式：处理 thinking
+            # Standard mode: handle thinking
             if item_type == "thinking":
                 thinking_text = item.get("text", "")
                 if thinking_text:
                     streamed_thinking_accumulator += thinking_text
                     if is_web_client:
-                        # Web UI: 前端协议 thinking_chunk
+                        # Web UI: use thinking_chunk frontend protocol
                         yield f"data: {json.dumps({'type': 'thinking_chunk', 'text': thinking_text}, ensure_ascii=False)}\n\n"
                     else:
-                        # 严格 OpenAI 客户端：reasoning_content；首包带 role
+                        # Strict OpenAI client: use reasoning_content; include role in first chunk
                         if not assistant_started:
                             assistant_started = True
                             yield _build_stream_chunk(
@@ -696,11 +694,10 @@ def _create_standard_stream_generator(
                             )
                 continue
 
-            # Standard 模式：处理 search（收集起来，最后输出）
+            # Standard mode: collect search events and emit at the end
             if item_type == "search":
                 search_data = item.get("data", {})
                 if isinstance(search_data, dict):
-                    # 提取 queries 和 sources
                     queries = search_data.get("queries", [])
                     sources = search_data.get("sources", [])
 
@@ -719,7 +716,7 @@ def _create_standard_stream_generator(
 
             streamed_content_accumulator += chunk_text
 
-            # 输出标准 OpenAI 格式的 delta
+            # Emit standard OpenAI delta
             if not assistant_started:
                 assistant_started = True
                 yield _build_stream_chunk(
@@ -750,7 +747,7 @@ def _create_standard_stream_generator(
             exc_info=True,
             extra={"request_info": {"event": "standard_stream_interrupted"}},
         )
-        error_hint = "\n\n[Notion 연결이 중단되었어요. 잠시 후 다시 시도해 주세요.]"
+        error_hint = "\n\n[Notion connection interrupted. Please try again in a moment.]"
         streamed_content_accumulator += error_hint
         if not assistant_started:
             assistant_started = True
@@ -763,14 +760,14 @@ def _create_standard_stream_generator(
         else:
             yield _build_stream_chunk(response_id, model_name, content=error_hint)
     finally:
-        # 选择最佳最终回复
+        # Pick the best final reply
         final_reply, _ = _select_best_final_reply(
             streamed_content_accumulator,
             authoritative_final_content,
             authoritative_final_source_type,
         )
 
-        # 发送缺失的后缀（如果有）
+        # Emit any missing suffix
         missing_suffix = _compute_missing_suffix(
             streamed_content_accumulator, final_reply
         )
@@ -789,7 +786,7 @@ def _create_standard_stream_generator(
                 )
             streamed_content_accumulator += missing_suffix
         elif final_reply != streamed_content_accumulator:
-            # 处理分叉内容（使用最终内容）
+            # Diverged — use the authoritative final reply
             if not streamed_content_accumulator and final_reply:
                 if not assistant_started:
                     assistant_started = True
@@ -805,14 +802,14 @@ def _create_standard_stream_generator(
                     )
                 streamed_content_accumulator = final_reply
 
-        # 输出搜索结果
+        # Emit collected search results
         if collected_search_sources or collected_search_queries:
             search_payload = {
                 "queries": collected_search_queries,
                 "sources": collected_search_sources,
             }
             if is_web_client:
-                # Web UI：扩展 search_metadata（带 OpenAI chunk 外壳）
+                # Web UI: extended search_metadata with OpenAI chunk envelope
                 yield _build_local_ui_chunk(
                     response_id,
                     model_name,
@@ -820,7 +817,7 @@ def _create_standard_stream_generator(
                     searches=search_payload,
                 )
             else:
-                # 严格客户端：markdown 注入 content，不丢结果
+                # Strict clients: inject as markdown content to avoid losing results
                 search_md = _format_search_results_md(search_payload)
                 if search_md:
                     if not assistant_started:
@@ -849,11 +846,11 @@ def _persist_round(
     assistant_thinking: str = "",
 ) -> None:
     """
-    持久化一轮对话并触发异步预压缩。
+    Persist one conversation round and trigger async pre-compression.
 
-    预压缩逻辑：
-    - 当 round >= WINDOW_ROUNDS//2 时，提前压缩滑出窗口的轮次
-    - 使用 BackgroundTasks 确保不阻塞当前对话
+    Pre-compression logic:
+    - When round >= WINDOW_ROUNDS//2, compress rounds sliding out of the window
+    - Uses BackgroundTasks to avoid blocking the current response
     """
     round_index = manager.persist_round(
         conversation_id,
@@ -862,12 +859,12 @@ def _persist_round(
         assistant_thinking=assistant_thinking,
     )
 
-    # 异步预压缩：当窗口快满时提前压缩
-    WINDOW_ROUNDS = 8  # 与 conversation.py 保持一致
-    PRECOMPRESS_THRESHOLD = WINDOW_ROUNDS // 2  # 在第 4 轮时开始预压缩
+    # Async pre-compression: compress rounds sliding out of the window early
+    WINDOW_ROUNDS = 8  # must match conversation.py
+    PRECOMPRESS_THRESHOLD = WINDOW_ROUNDS // 2  # start pre-compressing at round 4
 
     if round_index >= PRECOMPRESS_THRESHOLD:
-        # 计算需要压缩的轮次（滑出窗口的轮次）
+        # Round that is sliding out of the active window
         round_to_compress = round_index - WINDOW_ROUNDS + 1
         if round_to_compress >= 0:
             background_tasks.add_task(
@@ -888,7 +885,7 @@ def _persist_round(
                 },
             )
 
-    # 保留原有的压缩逻辑作为兜底
+    # Keep the original compression task as a safety fallback
     background_tasks.add_task(
         compress_round_if_needed,
         manager=manager,
@@ -918,18 +915,18 @@ async def _handle_lite_request(
     req_body: ChatCompletionRequest,
     response: Response,
 ) -> JSONResponse | StreamingResponse | ChatCompletionResponse:
-    """处理 Lite 模式请求（无记忆，单轮问答）"""
+    """Handle a Lite mode request (stateless, single-turn)."""
     pool = request.app.state.account_pool
 
-    # 提取用户问题
+    # Extract user prompt
     user_prompt = _prepare_messages_lite(req_body)
 
-    # 验证模型
+    # Validate model
     if not is_supported_model(req_body.model):
         available_models = list_available_models()
         raise HTTPException(
             status_code=400,
-            detail=f"지원하지 않는 모델이에요: '{req_body.model}'. 사용 가능한 모델: {', '.join(available_models)}",
+            detail=f"Unsupported model: '{req_body.model}'. Available models: {', '.join(available_models)}",
         )
 
     response_id = f"chatcmpl-{uuid.uuid4().hex}"
@@ -940,10 +937,10 @@ async def _handle_lite_request(
         try:
             client = pool.get_client()
 
-            # 构建 Lite transcript（无历史记忆）
+            # Build Lite transcript (no conversation history)
             transcript = build_lite_transcript(user_prompt, req_body.model)
 
-            # 调用 Notion API（不使用 thread_id）
+            # Call Notion API (no thread_id for Lite mode)
             stream_gen = client.stream_response(transcript, thread_id=None)
             first_item = next(stream_gen, None)
 
@@ -952,7 +949,7 @@ async def _handle_lite_request(
                     "Notion upstream returned empty content.", retriable=True
                 )
 
-            # 流式响应
+            # Streaming response
             if req_body.stream:
                 stream_headers = {
                     "Cache-Control": "no-cache",
@@ -970,7 +967,7 @@ async def _handle_lite_request(
                     headers=stream_headers,
                 )
 
-            # 非流式响应
+            # Non-streaming response
             content_parts: list[str] = []
             authoritative_final_content = ""
             authoritative_final_source_type = ""
@@ -988,7 +985,7 @@ async def _handle_lite_request(
                         )
                     continue
 
-                # Lite 模式忽略 thinking 和 search
+                # Lite mode: skip thinking and search events
                 if item_type in ("thinking", "search"):
                     continue
 
@@ -1056,7 +1053,7 @@ async def _handle_lite_request(
                 code="POOL_COOLING",
                 message=str(exc),
                 error_type="account_pool_cooling",
-                suggestion="모든 계정이 잠시 대기 중이에요. 몇 초 뒤 다시 시도해 주세요.",
+                suggestion="All accounts are temporarily cooling down. Please retry in a few seconds.",
             )
         except HTTPException:
             raise
@@ -1077,17 +1074,17 @@ async def _handle_lite_request(
                 return _build_error_response(
                     500,
                     code="INTERNAL_ERROR",
-                    message="서버 내부 오류가 발생했어요.",
+                    message="Internal server error.",
                     error_type="internal_error",
-                    suggestion="잠시 후 다시 시도해 주세요. 계속 발생하면 관리자에게 문의해 주세요.",
+                    suggestion="Please try again in a moment. If this persists, contact the administrator.",
                 )
 
     return _build_error_response(
         503,
         code="RETRIES_EXHAUSTED",
-        message="재시도를 모두 실패했어요.",
+        message="All retries exhausted.",
         error_type="upstream_error",
-        suggestion="Notion 서비스를 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해 주세요.",
+        suggestion="Notion service is temporarily unavailable. Please try again in a moment.",
     )
 
 
@@ -1097,23 +1094,23 @@ async def _handle_standard_request(
     response: Response,
 ) -> JSONResponse | StreamingResponse | ChatCompletionResponse:
     """
-    处理 Standard 模式请求（完整上下文，支持 thinking 和搜索）
+    Handle a Standard mode request (full context, thinking and search supported).
 
-    类似 Lite 模式，但：
-    1. 发送完整 messages 历史
-    2. 保留 thinking 输出
-    3. 保留搜索结果输出
+    Similar to Lite mode, but:
+    1. Sends the full message history
+    2. Preserves thinking output
+    3. Preserves search result output
     """
     from app.conversation import build_standard_transcript
 
     pool = request.app.state.account_pool
 
-    # 验证模型
+    # Validate model
     if not is_supported_model(req_body.model):
         available_models = list_available_models()
         raise HTTPException(
             status_code=400,
-            detail=f"지원하지 않는 모델이에요: '{req_body.model}'. 사용 가능한 모델: {', '.join(available_models)}",
+            detail=f"Unsupported model: '{req_body.model}'. Available models: {', '.join(available_models)}",
         )
 
     response_id = f"chatcmpl-{uuid.uuid4().hex}"
@@ -1124,8 +1121,8 @@ async def _handle_standard_request(
         try:
             client = pool.get_client()
 
-            # 构建 Standard transcript（完整上下文）
-            # 从 client 提取账号信息
+            # Build Standard transcript (full context)
+            # Extract account info from client
             account = {
                 "user_id": client.user_id,
                 "space_id": client.space_id,
@@ -1133,7 +1130,7 @@ async def _handle_standard_request(
             messages = [msg.dict() for msg in req_body.messages]
             transcript = build_standard_transcript(messages, req_body.model, account)
 
-            # 调用 Notion API（不使用 thread_id，让 Notion ��动处理）
+            # Call Notion API (no thread_id, let Notion manage threads)
             stream_gen = client.stream_response(transcript, thread_id=None)
             first_item = next(stream_gen, None)
 
@@ -1142,7 +1139,7 @@ async def _handle_standard_request(
                     "Notion upstream returned empty content.", retriable=True
                 )
 
-            # 流式响应
+            # Streaming response
             if req_body.stream:
                 stream_headers = {
                     "Cache-Control": "no-cache",
@@ -1162,7 +1159,7 @@ async def _handle_standard_request(
                     headers=stream_headers,
                 )
 
-            # 非流式响应
+            # Non-streaming response
             content_parts: list[str] = []
             thinking_parts: list[str] = []
             search_results: list[dict] = []
@@ -1182,14 +1179,14 @@ async def _handle_standard_request(
                         )
                     continue
 
-                # Standard 模式：处理 thinking
+                # Standard mode: handle thinking
                 if item_type == "thinking":
                     thinking_text = item.get("text", "")
                     if thinking_text:
                         thinking_parts.append(thinking_text)
                     continue
 
-                # Standard 模式：处理 search
+                # Standard mode: handle search
                 if item_type == "search":
                     search_data = item.get("data", {})
                     if search_data:
@@ -1218,23 +1215,23 @@ async def _handle_standard_request(
                 full_text if full_text.strip() else "[assistant_no_visible_content]"
             )
 
-            # 构建响应
+            # Build response
             response_message = ChatMessage(role="assistant", content=response_text)
 
-            # 如果有 thinking，添加到扩展字段（前端会读取）
+            # Attach thinking to extension field if present (frontend reads it)
             if thinking_parts:
                 response_message.thinking = "".join(thinking_parts)
 
-            # 构建响应
+            # Build response object
             response_obj = ChatCompletionResponse(
                 id=response_id,
                 model=req_body.model,
                 choices=[ChatMessageResponseChoice(message=response_message)],
             )
 
-            # 如果有搜索结果，添加到扩展字段（前端会读取）
+            # Attach search results to extension field if present (frontend reads it)
             if search_results:
-                # 提取 queries 和 sources
+                # Extract queries and sources
                 all_queries = []
                 all_sources = []
                 for result in search_results:
@@ -1243,7 +1240,7 @@ async def _handle_standard_request(
                         all_sources.extend(result.get("sources", []))
 
                 if all_queries or all_sources:
-                    # 添加到自定义字段
+                    # Add to custom field
                     response_obj.search_metadata = {
                         "queries": all_queries,
                         "sources": all_sources,
@@ -1284,7 +1281,7 @@ async def _handle_standard_request(
                 code="POOL_COOLING",
                 message=str(exc),
                 error_type="account_pool_cooling",
-                suggestion="모든 계정이 잠시 대기 중이에요. 몇 초 뒤 다시 시도해 주세요.",
+                suggestion="All accounts are temporarily cooling down. Please retry in a few seconds.",
             )
         except HTTPException:
             raise
@@ -1305,17 +1302,17 @@ async def _handle_standard_request(
                 return _build_error_response(
                     500,
                     code="INTERNAL_ERROR",
-                    message="서버 내부 오류가 발생했어요.",
+                    message="Internal server error.",
                     error_type="internal_error",
-                    suggestion="잠시 후 다시 시도해 주세요. 계속 발생하면 관리자에게 문의해 주세요.",
+                    suggestion="Please try again in a moment. If this persists, contact the administrator.",
                 )
 
     return _build_error_response(
         503,
         code="RETRIES_EXHAUSTED",
-        message="재시도를 모두 실패했어요.",
+        message="All retries exhausted.",
         error_type="upstream_error",
-        suggestion="Notion 서비스를 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해 주세요.",
+        suggestion="Notion service is temporarily unavailable. Please try again in a moment.",
     )
 
 
@@ -1327,24 +1324,24 @@ async def create_chat_completion(
     response: Response,
 ):
     """
-    创建聊天请求，严格兼容 OpenAI API。
+    Create a chat completion request, strictly compatible with the OpenAI API.
 
-    速率限制：
-    - Lite 模式：30/分钟（适合单轮问答）
-    - Standard 模式：25/分钟（完整上下文，支持 thinking 和搜索）
-    - Heavy 模式：20/分钟（包含会话管理）
+    Rate limits:
+    - Lite mode:     30/min (suited for single-turn Q&A)
+    - Standard mode: 25/min (full context with thinking and search)
+    - Heavy mode:    20/min (includes session management)
     """
     from app.config import is_standard_mode
 
-    # Lite 模式：单轮问答，无记忆
+    # Lite mode: single-turn, stateless
     if is_lite_mode():
         return await _handle_lite_request(request, req_body, response)
 
-    # Standard 模式：完整上下文，支持 thinking 和搜索
+    # Standard mode: full context with thinking and search
     if is_standard_mode():
         return await _handle_standard_request(request, req_body, response)
 
-    # Heavy 模式：完整会话管理
+    # Heavy mode: full session management
     pool = request.app.state.account_pool
     manager = request.app.state.conversation_manager
 
@@ -1359,7 +1356,7 @@ async def create_chat_completion(
         available_models = list_available_models()
         raise HTTPException(
             status_code=400,
-            detail=f"지원하지 않는 모델이에요: '{req_body.model}'. 사용 가능한 모델: {', '.join(available_models)}",
+            detail=f"Unsupported model: '{req_body.model}'. Available models: {', '.join(available_models)}",
         )
 
     conversation_id = (
@@ -1382,19 +1379,17 @@ async def create_chat_completion(
         conversation_id = manager.new_conversation()
         restore_history = True
 
-    # 关键修复：总是持久化客户端发送的历史消息，避免上下文丢失
-    # 即使 conversation_id 已存在，也需要同步客户端发送的完整历史
+    # Always persist history sent by the client to prevent context loss
+    # even when conversation_id already exists.
     if history_messages:
-        # 检查是否需要持久化（避免重复）
+        # Check if persistence is needed (avoid duplicates)
         with manager._get_conn() as conn:
             existing_count = manager._count_messages(conn, conversation_id)
             history_count = len(history_messages)
 
-            # 只有当客户端发送的历史消息多于数据库中的消息时才持久化
-            # 这样可以：
-            # 1. 避免重复持久化相同的历史
-            # 2. 确保客户端发送的完整历史被保存
-            # 3. 解决"滑动窗口缺失 AI 回复"的 bug
+            # Only persist if the client sent more history than the DB already has.
+            # This avoids duplicate persistence, ensures full history is saved,
+            # and fixes the "sliding window missing AI replies" bug.
             if history_count > existing_count:
                 _persist_history_messages(manager, conversation_id, history_messages)
                 restored_user_count = sum(
@@ -1438,18 +1433,18 @@ async def create_chat_completion(
             memory_degraded = bool(transcript_payload.get("memory_degraded"))
             memory_headers = {"X-Memory-Status": "degraded"} if memory_degraded else {}
 
-            # 获取或创建 thread_id 以保持对话上下文
+            # Fetch or create thread_id for conversation context
             thread_id = manager.get_conversation_thread_id(conversation_id)
 
-            # 检测用户是否在对话中途切换了模型。Notion 的 thread 会把 config 中的 model
-            # 粘在服务端 thread 对象上，复用同一 thread 即使 transcript 里写了新 model，
-            # 上游实际仍按原始模型执行。必须丢掉旧 thread 让 Notion 按新 model 新建，
-            # 对话上下文由我们自己的滑动窗口 + 压缩摘要重建，不会失忆。
+            # Detect mid-conversation model switches. Notion pins the model from config
+            # to the server-side thread object. Reusing the same thread with a new model
+            # causes Notion to silently use the original model. We must discard the old
+            # thread so Notion creates a fresh one; our sliding window + summaries rebuild context.
             if thread_id:
                 bound_model = manager.get_conversation_thread_model(conversation_id)
-                # bound_model 为 None 表示升级前的遗留对话，没记录过模型绑定，
-                # 无法判断 thread 当初绑的是什么模型。为避免继续踩老 bug，
-                # 一律当作"可能不匹配"处理，丢弃老 thread 重新开。
+                # bound_model is None for legacy conversations (pre-binding tracking).
+                # We cannot know what model the thread was bound to, so treat it as
+                # a potential mismatch and discard it to avoid the old bug.
                 if not bound_model or bound_model != req_body.model:
                     logger.info(
                         "Recreating Notion thread: model changed or legacy binding",
@@ -1469,7 +1464,7 @@ async def create_chat_completion(
             stream_gen = client.stream_response(transcript, thread_id=thread_id)
             first_item = next(stream_gen, None)
 
-            # 保存 thread_id（如果是新对话或刚切换模型）
+            # Save thread_id (new conversation or model just switched)
             if not thread_id and hasattr(client, "current_thread_id"):
                 manager.set_conversation_thread_id(
                     conversation_id,
@@ -1589,7 +1584,7 @@ async def create_chat_completion(
                                 )
                                 continue
 
-                        # 在第一个正文内容发出前，把积攒的搜索信息拼上去
+                        # Prepend accumulated search markdown before first content chunk
                         if pending_search_md and client_type != "web":
                             chunk_text = pending_search_md + chunk_text
 
@@ -1659,7 +1654,7 @@ async def create_chat_completion(
                             }
                         },
                     )
-                    error_hint = "\n\n[Notion 연결이 중단되었어요. 잠시 후 다시 시도해 주세요.]"
+                    error_hint = "\n\n[Notion connection interrupted. Please try again in a moment.]"
                     streamed_content_accumulator += error_hint
                     if not assistant_started:
                         assistant_started = True
@@ -1896,7 +1891,7 @@ async def create_chat_completion(
                 code="POOL_COOLING",
                 message=str(exc),
                 error_type="account_pool_cooling",
-                suggestion="모든 계정이 잠시 대기 중이에요. 몇 초 뒤 다시 시도해 주세요.",
+                suggestion="All accounts are temporarily cooling down. Please retry in a few seconds.",
             )
         except HTTPException:
             raise
@@ -1918,17 +1913,17 @@ async def create_chat_completion(
                 return _build_error_response(
                     500,
                     code="INTERNAL_ERROR",
-                    message="서버 내부 오류가 발생했어요.",
+                    message="Internal server error.",
                     error_type="internal_error",
-                    suggestion="잠시 후 다시 시도해 주세요. 계속 발생하면 관리자에게 문의해 주세요.",
+                    suggestion="Please try again in a moment. If this persists, contact the administrator.",
                 )
 
     return _build_error_response(
         503,
         code="RETRIES_EXHAUSTED",
-        message="재시도를 모두 실패했어요.",
+        message="All retries exhausted.",
         error_type="upstream_error",
-        suggestion="Notion 서비스를 일시적으로 사용할 수 없어요. 잠시 후 다시 시도해 주세요.",
+        suggestion="Notion service is temporarily unavailable. Please try again in a moment.",
     )
 
 
